@@ -2,6 +2,7 @@ import requests
 import json
 from time import sleep
 import re
+from sys import exit
 
 # Function to validate phone numbers
 def is_valid_phone_number(number):
@@ -44,11 +45,12 @@ headers = {
 payload_templates = {'channel': 'WHATSAPP', 'status': 'APPROVED'}
 
 # Fetching approved templates
-response_templates = requests.get(url_templates, headers=headers, params=payload_templates)
-
-# Checking request success
-if response_templates.status_code != 200:
-    print("Error fetching templates:", response_templates.text)
+try:
+    response_templates = requests.get(url_templates, headers=headers, params=payload_templates)
+    response_templates.raise_for_status()  # Will raise an HTTPError if the response code is not 200
+except requests.exceptions.RequestException as e:
+    print(f"Error fetching templates: {e}")
+    input("Press Enter to exit...")  # Keep console open in case of error
     exit()
 
 # Processing templates
@@ -77,12 +79,16 @@ for template in templates:
     }
 
     # Sending the message
-    response_send = requests.post(url=url_send, headers=headers, json=payload_send)
-
-    # Displaying the API response
-    if response_send.status_code != 200:
-        print("Error sending message:", response_send.text)
-    else:
+    try:
+        response_send = requests.post(url=url_send, headers=headers, json=payload_send)
+        response_send.raise_for_status()  # Will raise an HTTPError if the response code is not 200
         print(f"Message sent successfully! TemplateId = {template['id']}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending message for template {template['id']}: {e}")
 
     sleep(sleep_time)
+
+# Keep console open after execution, in case of errors
+input("Press Enter to exit...")
+sleep(3)
+exit()
