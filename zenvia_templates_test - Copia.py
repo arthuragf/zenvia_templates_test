@@ -4,30 +4,19 @@ from time import sleep
 import re
 from sys import exit
 
-import requests
-
-def print_raw_request(prepared_request):
-    print(f'{prepared_request.method} {prepared_request.url}')
-    for key, value in prepared_request.headers.items():
-        print(f'{key}: {value}')
-    print('\nBody:')
-    print(prepared_request.body.decode('utf-8') if prepared_request.body else None)
-
-
-
 # Function to validate phone numbers
 def is_valid_phone_number(number):
     return re.fullmatch(r'\+?[1-9]\d{10,14}$', number) is not None
 
 # Receiving and validating user inputs
 while True:
-    token = input("Enter the API token: ")
+    token = 'aSzcTQNlrVdzXCxIX6MhPSAdc7R6j5fPRtpm'
     if token:
         break
     print("Token cannot be empty.")
 
 while True:
-    from_number = input("Enter the sender's phone number: ")
+    from_number = '556132466180'
     if is_valid_phone_number(from_number):
         break
     print("Invalid sender number. Use a valid international format.")
@@ -37,35 +26,13 @@ while True:
     if is_valid_phone_number(to_number):
         break
     print("Invalid recipient number. Use a valid international format.")
+    
+template_id = input("Enter the the template ID to send: ")
 
-while True:
-    try:
-        sleep_time = int(input("Enter the sleep time between messages (in seconds): "))
-        if sleep_time > 0:
-            break
-        print("Sleep time must be a positive integer.")
-    except ValueError:
-        print("Please enter a valid number.")
-
-# URL to fetch approved templates
-url_templates = 'https://api.zenvia.com/v2/templates'
 headers = {
-    'X-API-TOKEN': token,
+    'X-API-TOKEN': ',
     'Content-Type': 'application/json',
 }
-payload_templates = {'channel': 'WHATSAPP', 'status': 'APPROVED'}
-
-# Fetching approved templates
-try:
-    response_templates = requests.get(url_templates, headers=headers, params=payload_templates)
-    response_templates.raise_for_status()  # Will raise an HTTPError if the response code is not 200
-except requests.exceptions.RequestException as e:
-    print(f"Error fetching templates: {e}")
-    input("Press Enter to exit...")  # Keep console open in case of error
-    exit()
-
-# Processing templates
-templates = response_templates.json()
 
 # URL to send messages
 url_send = 'https://api.zenvia.com/v1/channels/whatsapp/messages'
@@ -91,16 +58,12 @@ for template in templates:
 
     # Sending the message
     try:
-        req = requests.Request('POST',url_send,headers=headers,json=payload_send)
-        prepared = req.prepare()
-        print_raw_request(prepared)
-        s = requests.Session()
-        response_send = s.send(prepared)
+        response_send = requests.post(url=url_send, headers=headers, json=payload_send)
         response_send.raise_for_status()  # Will raise an HTTPError if the response code is not 200
         print(f"Message sent successfully! TemplateId = {template['id']}")
     except requests.exceptions.RequestException as e:
         print(f"Error sending message for template {template['id']}: {e}")
-    break
+
     sleep(sleep_time)
 
 # Keep console open after execution, in case of errors
